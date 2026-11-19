@@ -10,6 +10,11 @@ this project adheres to
 
 ### Added
 
+- Add a `String` method on `CredentialArm` returning the same stable identifier
+  `Inspect` reports, so an arm formats predictably in logs and reports instead
+  of relying on its underlying string type. An unknown arm returns a
+  clearly-marked unknown value rather than an empty string. (#673)
+
 - Add `make ci-local`, which runs everything CI runs, in CI's order, with the
   commands CI uses. `scripts/cilocal` reads the `run:` steps out of
   `.github/workflows/*.yml` and executes them as written under bash, from each
