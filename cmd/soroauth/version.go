@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"runtime"
+
+	soroauth "github.com/soroauth/soroauth-go"
 )
 
 // Build metadata, injected at build time with
@@ -19,7 +21,9 @@ import (
 // TestReleaseWorkflowSetsBuildMetadata fails if it stops doing so.
 var (
 	// version is the release tag this binary was built from, e.g. v0.2.0.
-	version = "dev"
+	// Defaults to soroauth.Version so the library constant and the binary
+	// agree when the binary is built without ldflags (dev builds).
+	version = soroauth.Version
 	// commit is the git commit this binary was built from.
 	commit = "unknown"
 	// date is the build timestamp, RFC 3339 in UTC.
