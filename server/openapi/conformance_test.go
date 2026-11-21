@@ -306,6 +306,14 @@ func TestServiceMatchesSpec(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshalling the envelope body: %v", err)
 	}
+	riskBody, err := json.Marshal(map[string]string{"entry": signed})
+	if err != nil {
+		t.Fatalf("marshalling the risk body: %v", err)
+	}
+	riskEnvelopeBody, err := json.Marshal(map[string]string{"entry": envelope})
+	if err != nil {
+		t.Fatalf("marshalling the risk envelope body: %v", err)
+	}
 	oversize := `{"entry":"` + strings.Repeat("A", 2<<20) + `","network":"testnet"}`
 
 	cases := []struct {
@@ -331,6 +339,13 @@ func TestServiceMatchesSpec(t *testing.T) {
 		{"verify oversize body", "POST", "POST", "/verify", oversize, true, false, http.StatusRequestEntityTooLarge},
 		{"verify single entry", "POST", "POST", "/verify", string(validBody), true, true, http.StatusOK},
 		{"verify envelope", "POST", "POST", "/verify", string(envelopeBody), true, true, http.StatusOK},
+		{"risk wrong method", "GET", "POST", "/risk", "", false, false, http.StatusMethodNotAllowed},
+		{"risk unauthenticated", "POST", "POST", "/risk", string(riskBody), false, false, http.StatusUnauthorized},
+		{"risk malformed json", "POST", "POST", "/risk", "{", true, false, http.StatusBadRequest},
+		{"risk missing entry", "POST", "POST", "/risk", `{}`, true, false, http.StatusBadRequest},
+		{"risk undecodable entry", "POST", "POST", "/risk", `{"entry":"!!!"}`, true, false, http.StatusBadRequest},
+		{"risk single entry", "POST", "POST", "/risk", string(riskBody), true, true, http.StatusOK},
+		{"risk envelope", "POST", "POST", "/risk", string(riskEnvelopeBody), true, true, http.StatusOK},
 	}
 
 	visited := map[string]bool{}
@@ -472,6 +487,41 @@ func TestGeneratedClientAgainstRunningService(t *testing.T) {
 		t.Errorf("envelope report is missing operation_index 1: %+v", reports[0])
 	}
 	validateResponse(t, http.MethodPost, "/verify", env.StatusCode(), env.HTTPResponse.Header, env.Body)
+
+	risk, err := c.RiskWithResponse(context.Background(), client.RiskJSONRequestBody{Entry: signed})
+	if err != nil {
+		t.Fatalf("generated client Risk (single): %v", err)
+	}
+	if risk.StatusCode() != http.StatusOK || risk.JSON200 == nil {
+		t.Fatalf("generated client single risk = %d", risk.StatusCode())
+	}
+	riskReport, err := risk.JSON200.AsRiskReport()
+	if err != nil {
+		t.Fatalf("single risk did not decode as a RiskReport: %v", err)
+	}
+	if riskReport.Note == "" {
+		t.Error("the risk report does not carry the analyzer's caveat")
+	}
+	if riskReport.Findings == nil {
+		t.Error("the risk report's findings are null rather than an empty array")
+	}
+	validateResponse(t, http.MethodPost, "/risk", risk.StatusCode(), risk.HTTPResponse.Header, risk.Body)
+
+	riskEnv, err := c.RiskWithResponse(context.Background(), client.RiskJSONRequestBody{Entry: envelope})
+	if err != nil {
+		t.Fatalf("generated client Risk (envelope): %v", err)
+	}
+	if riskEnv.StatusCode() != http.StatusOK || riskEnv.JSON200 == nil {
+		t.Fatalf("generated client envelope risk = %d", riskEnv.StatusCode())
+	}
+	riskReports, err := riskEnv.JSON200.AsRiskResult1()
+	if err != nil {
+		t.Fatalf("envelope risk did not decode as an array: %v", err)
+	}
+	if len(riskReports) != 1 || riskReports[0].OperationIndex == nil || *riskReports[0].OperationIndex != 1 {
+		t.Fatalf("envelope risk reports = %+v", riskReports)
+	}
+	validateResponse(t, http.MethodPost, "/risk", riskEnv.StatusCode(), riskEnv.HTTPResponse.Header, riskEnv.Body)
 }
 
 func mustJSON(t *testing.T, s string) string {

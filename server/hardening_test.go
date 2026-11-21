@@ -385,8 +385,8 @@ func TestMetricsEndpointIsSeparableFromTheAPIPort(t *testing.T) {
 }
 
 func TestRouteLabelIsClosed(t *testing.T) {
-	tests := map[string]string{
-		"/verify":         routeVerify,
+	tests := map[string]string{"/verify": routeVerify,
+		"/risk":           routeRisk,
 		"/healthz":        routeHealthz,
 		"/":               routeUnmatched,
 		"/verify/secret":  routeUnmatched,

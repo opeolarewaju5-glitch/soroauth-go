@@ -1,10 +1,12 @@
 # Verification service
 
-`server/` is a small HTTP service around `VerifyEntry`, for wallets and custody
-systems that want a pre-submission check without embedding Go. It answers one
-question per entry — do the signatures on it verify over the payload it commits
-to? — with the same verdicts and the same JSON shape as
-`soroauth verify --json`.
+`server/` is a small HTTP service around `VerifyEntry` and `Analyze`, for
+wallets and custody systems that want a pre-submission check without embedding
+Go. `/verify` answers one question per entry — do the signatures on it verify
+over the payload it commits to? — with the same verdicts and the same JSON shape
+as `soroauth verify --json`. `/risk` returns the structural analyzer's findings
+with their stable identifiers and severities, so a reviewer with an entry and a
+browser can see what the analyzer sees without linking Go.
 
 ## The contract
 
@@ -20,6 +22,25 @@ exercises the client generated from it. A handler change the spec does not
 describe fails that check. In particular the verdict enum keeps `cannot_check`
 as a distinct value, so a custom account's signature is reported as uncheckable
 rather than flattened to a boolean.
+
+## Risk analysis
+
+`POST /risk` runs `soroauth.Analyze` with its documented defaults and returns
+the findings, each with an exported `code` (for example
+`LEGACY_CREDENTIALS_NOT_ADDRESS_BOUND`), a severity, and its prose. The codes
+are the stable identifiers consumers match on; the library exports them and the
+OpenAPI schema enumerates them. A single entry answers with one report, an
+envelope with an array carrying one-based `operation_index` and `entry_index`.
+
+Every report carries the analyzer's note: findings are heuristics, not a safety
+guarantee, and a clean report means no heuristic fired. The limits — what the
+analyzer cannot see — are in [`analyzer-heuristics.md`](analyzer-heuristics.md)
+and are linked rather than restated. The endpoint does not imply approval.
+
+`/risk` takes the same bearer token and concurrency bound as `/verify`, and its
+body is subject to the same `MAX_BODY_BYTES` cap. It shares the request body cap
+with verification but not its verdicts: a 200 with a critical finding is a
+successful analysis, not a refused request.
 
 ## Configuration
 
@@ -115,8 +136,8 @@ Prometheus. A test walks every gathered series and asserts each label name and
 value is in the set the code declares.
 
 - `method`: the standard methods; anything else is `other`.
-- `route`: `/verify`, `/healthz`, or `unmatched` — the path is logged as the
-  matched route template, so an arbitrary path cannot become a label or a
+- `route`: `/verify`, `/risk`, `/healthz`, or `unmatched` — the path is logged
+  as the matched route template, so an arbitrary path cannot become a label or a
   log-injection vector.
 - `status`: `200`, `400`, `401`, `404`, `405`, `413`, `500`, `503`; anything
   else is `other`.
@@ -167,6 +188,11 @@ non-JSON, wrong method), a tampered expiration (invalid), a contradicted
 positions. The verdicts are asserted against the library's `Verdict*` constants
 rather than string literals, so the tests fail if the service ever stops
 speaking the CLI's verdicts.
+
+`server/risk_test.go` covers a legacy entry with findings, a clean V2 report
+that is an empty array rather than null, the analyzer's note on every report,
+and the malformed-request and wrong-method paths. The finding code and severity
+are asserted against the library's exported constants.
 
 `server/hardening_test.go` covers the bounds and the fail-closed bind, and
 asserts the request log carries no entry bytes or secret.

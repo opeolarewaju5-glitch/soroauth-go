@@ -148,11 +148,13 @@
     "cost-report.yml/report": { "skip": "reads the repository's Actions usage through the GitHub API" },
 
     "reproducible.yml/reproduce": { "skip": "rebuilds a published release and compares it with the checksums attached to that release" },
+    "reproducible.yml/reproduce-wasm": { "skip": "rebuilds the wasm artifacts of a published release and compares them with the published digest" },
     "verify-release.yml/verify": { "skip": "verifies the signatures and attestations of a published release with cosign and the GitHub API" },
     "verify-release.yml/self-test": { "skip": "by hand only: keyless-signs a throwaway binary with the workflow's GitHub OIDC identity" },
 
     "release.yml/release-preflight": { "skip": "release workflow: runs when a version tag is pushed" },
     "release.yml/golden-drift": { "skip": "release workflow: runs when a version tag is pushed (ci.yml/golden-drift is the same check)" },
+    "release.yml/wasm-digest": { "skip": "release workflow: rebuilds the wasm twice from the tag and publishes its digest when a version tag is pushed" },
     "release.yml/build": { "skip": "release workflow: builds and keyless-signs the release binaries when a version tag is pushed" },
     "release.yml/image": { "skip": "release workflow: pushes and signs the container image when a version tag is pushed" },
     "release.yml/image-smoke": { "skip": "release workflow: pulls the image it just published" },

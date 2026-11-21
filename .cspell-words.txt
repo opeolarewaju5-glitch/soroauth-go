@@ -16,6 +16,7 @@ cli
 denylist
 docsite
 ed25519
+schnorr
 e2e
 envelope
 esbuild

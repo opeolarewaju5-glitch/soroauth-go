@@ -181,7 +181,7 @@ func (s *server) hook() soroauth.Hook {
 // the code rather than a claim.
 var (
 	labelMethods         = setOf(http.MethodGet, http.MethodPost, "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS")
-	labelRoutes          = setOf(routeVerify, routeHealthz, routeUnmatched)
+	labelRoutes          = setOf(routeVerify, routeRisk, routeHealthz, routeUnmatched)
 	labelStatuses        = setOf("200", "400", "401", "404", "405", "413", "500", "503")
 	labelCredentialTypes = setOf(
 		soroauth.CredentialTypeSourceAccount,

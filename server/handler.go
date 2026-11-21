@@ -93,6 +93,7 @@ func (s *server) handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", s.healthzHandler)
 	mux.HandleFunc("/verify", s.verifyHandler)
+	mux.HandleFunc("/risk", s.riskHandler)
 
 	var h http.Handler = mux
 	h = s.withRecovery(h)
@@ -449,6 +450,8 @@ func routeLabel(path string) string {
 	switch path {
 	case "/verify":
 		return routeVerify
+	case "/risk":
+		return routeRisk
 	case "/healthz":
 		return routeHealthz
 	default:
@@ -460,6 +463,7 @@ func routeLabel(path string) string {
 // a typo is a compile error rather than a new series.
 const (
 	routeVerify    = "/verify"
+	routeRisk      = "/risk"
 	routeHealthz   = "/healthz"
 	routeUnmatched = "unmatched"
 )

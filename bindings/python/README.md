@@ -5,6 +5,12 @@ signing, and inspecting Soroban authorization entries. It wraps the C ABI shared
 library built from the Go source, so no Go toolchain is required at install
 time—only the platform-appropriate wheel.
 
+## Platform Support
+
+- **Operating systems**: Linux and macOS. Windows is not supported.
+- **Architectures**: `x86_64`, `aarch64` / `arm64`.
+- **Runtime**: Python 3.9+.
+
 ## Installation
 
 ```bash

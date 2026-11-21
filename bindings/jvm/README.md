@@ -3,6 +3,13 @@
 A JVM library over the soroauth signing core, published to a Maven repository as
 `org.soroauth:soroauth-jvm`.
 
+## Platform Support
+
+- **Operating systems**: Linux and macOS for native symbols; pure JVM signing is
+  platform-independent.
+- **Architectures**: `x86_64`, `aarch64` / `arm64`.
+- **Runtime**: JDK 22+ (requires the final Foreign Function and Memory API).
+
 ## On the C ABI dependency
 
 This binding's issue notes it depends on the C ABI issue; that issue
